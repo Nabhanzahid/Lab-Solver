@@ -227,6 +227,8 @@ export default function App() {
   
   const [groqKey, setGroqKey] = useState(() => localStorage.getItem('groq_api_key') || '');
   const [preferredModelGroq, setPreferredModelGroq] = useState(() => localStorage.getItem('ls_groq_model') || 'llama-3.2-11b-vision-preview');
+  const [groqModels, setGroqModels] = useState([]);
+  const [isFetchingGroqModels, setIsFetchingGroqModels] = useState(false);
   
   const [refiningTaskId, setRefiningTaskId] = useState(null);
 
@@ -253,6 +255,38 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('ls_groq_model', preferredModelGroq);
   }, [preferredModelGroq]);
+
+  useEffect(() => {
+    if (provider === 'groq' && groqKey.trim().length >= 10) {
+      let isSubscribed = true;
+      setIsFetchingGroqModels(true);
+      fetch('https://api.groq.com/openai/v1/models', {
+        headers: { 'Authorization': `Bearer ${groqKey.trim()}` }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (isSubscribed && data && data.data) {
+          const models = data.data.map(m => m.id).sort((a, b) => {
+            if (a.includes('vision') && !b.includes('vision')) return -1;
+            if (!a.includes('vision') && b.includes('vision')) return 1;
+            return a.localeCompare(b);
+          });
+          setGroqModels(models);
+          setPreferredModelGroq(prev => {
+             if (!models.includes(prev) && models.length > 0) {
+                return models.find(m => m.includes('vision')) || models[0];
+             }
+             return prev;
+          });
+        }
+      })
+      .catch(err => console.error("Failed to fetch Groq models", err))
+      .finally(() => {
+        if(isSubscribed) setIsFetchingGroqModels(false);
+      });
+      return () => { isSubscribed = false; };
+    }
+  }, [provider, groqKey]);
 
   const handleSolve = useCallback(async (isAuto = false) => {
     // Fresh check of basic readiness
@@ -588,14 +622,27 @@ export default function App() {
                     <option value="gemini-1.5-pro">Gemini 1.5 Pro (Powerful)</option>
                   </select>
                 ) : provider === 'groq' ? (
-                  <select 
-                    className="model-select"
-                    value={preferredModelGroq}
-                    onChange={(e) => setPreferredModelGroq(e.target.value)}
-                  >
-                    <option value="llama-3.2-11b-vision-preview">Llama 3.2 11B Vision (Fast/Standard)</option>
-                    <option value="llama-3.3-70b-versatile">Llama 3.3 70B (Versatile/No-Vision)</option>
-                  </select>
+                  isFetchingGroqModels ? (
+                     <div className="model-select" style={{padding: '10px', fontSize:'0.9em', color:'#a855f7', display: 'flex', alignItems: 'center'}}>
+                       Fetching live models...
+                     </div>
+                  ) : (
+                    <select 
+                      className="model-select"
+                      value={preferredModelGroq}
+                      onChange={(e) => setPreferredModelGroq(e.target.value)}
+                    >
+                      {groqModels.length > 0 ? (
+                        groqModels.map(m => (
+                          <option key={m} value={m}>
+                            {m} {m.includes('vision') ? ' (Vision)' : ''}
+                          </option>
+                        ))
+                      ) : (
+                        <option value="llama-3.2-11b-vision-preview">Llama 3.2 11B Vision (Fallback)</option>
+                      )}
+                    </select>
+                  )
                 ) : (
                   <select 
                     className="model-select"
