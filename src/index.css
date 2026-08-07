@@ -14,16 +14,16 @@
   --border:        #e2e8f0;
   --border-glow:   transparent;
 
-  --accent-blue:   #2563eb;
-  --accent-violet: #2563eb; /* Replaced purple entirely */
+  --accent-blue:   #0f172a;
+  --accent-violet: #0f172a; /* Replaced purple entirely */
   --accent-teal:   #0d9488;
   --accent-green:  #16a34a;
   --accent-amber:  #d97706;
   --accent-red:    #dc2626;
 
   --gradient-main: none;
-  --gradient-hero: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
-  --gradient-card: linear-gradient(135deg, rgba(37,99,235,0.05) 0%, rgba(37,99,235,0.02) 100%);
+  --gradient-hero: #0f172a;
+  --gradient-card: linear-gradient(135deg, transparent 0%, transparent 100%);
 
   /* Text */
   --text-primary:   #0f172a;
@@ -118,15 +118,12 @@ body {
   border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
   font-size: 18px;
-  box-shadow: 0 0 20px rgba(99,102,241,0.4);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 .logo-text {
   font-size: 20px;
   font-weight: 700;
-  background: var(--gradient-hero);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--text-primary);
 }
 .logo-sub {
   font-size: 11px;
@@ -172,10 +169,7 @@ body {
   margin-bottom: 16px;
 }
 .hero h1 span {
-  background: var(--gradient-hero);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--text-primary);
 }
 .hero p {
   font-size: 1.1rem;
@@ -231,8 +225,8 @@ body {
   background-position: right 16px center;
 }
 .model-select:focus {
-  border-color: var(--accent-blue);
-  box-shadow: 0 0 0 3px rgba(99,179,237,0.12);
+  border-color: #0f172a;
+  box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.1);
 }
 .model-select option {
   background: var(--bg-surface);
@@ -279,8 +273,8 @@ body {
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 .api-key-input:focus {
-  border-color: var(--accent-blue);
-  box-shadow: 0 0 0 3px rgba(99,179,237,0.12);
+  border-color: #0f172a;
+  box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.1);
 }
 .api-key-input::placeholder { color: var(--text-muted); }
 .api-key-toggle {
@@ -417,7 +411,7 @@ body {
   position: relative;
   overflow: hidden;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 20px rgba(99,102,241,0.4);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -434,7 +428,7 @@ body {
 .solve-btn:hover:not(:disabled)::before { opacity: 1; }
 .solve-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(99,102,241,0.6);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
 }
 .solve-btn:active:not(:disabled) { transform: translateY(0); }
 .solve-btn:disabled {
@@ -493,10 +487,7 @@ body {
   font-size: 22px;
   font-weight: 700;
   margin-bottom: 12px;
-  background: var(--gradient-hero);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--text-primary);
 }
 .loading-msg {
   font-size: 14px;
@@ -535,10 +526,7 @@ body {
   font-weight: 700;
 }
 .results-title span {
-  background: var(--gradient-hero);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--text-primary);
 }
 .results-meta {
   font-size: 13px;
@@ -565,7 +553,7 @@ body {
   transition: all 0.2s;
 }
 .btn-outline:hover {
-  border-color: var(--accent-blue);
+  border-color: #0f172a;
   color: var(--accent-blue);
   background: rgba(99,179,237,0.06);
 }
@@ -583,7 +571,7 @@ body {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 2px 12px rgba(99,102,241,0.35);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 .btn-primary-sm:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(99,102,241,0.5); }
 
@@ -891,7 +879,7 @@ body {
   align-items: center;
   gap: 4px;
 }
-.copy-btn:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
+.copy-btn:hover { border-color: #0f172a; color: var(--accent-blue); }
 
 pre {
   margin: 0;
@@ -957,7 +945,7 @@ pre {
   border-radius: 14px;
   display: flex; align-items: center; justify-content: center;
   font-size: 22px;
-  box-shadow: 0 0 20px rgba(99,102,241,0.4);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 .conclusion-title {
   font-size: 20px;
