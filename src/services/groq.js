@@ -61,7 +61,27 @@ export async function solveLabReportGroq(file, apiKey, onProgress, model = 'llam
       {
         role: "system",
         content: `You are a Lab Lab Report Assistant. Analyze the document and internalize all tasks. 
-        Respond with a JSON object following the provided schema. ${prompt}`
+        Respond with a JSON object following this exact structure:
+        {
+          "reportTitle": "string",
+          "subject": "string",
+          "totalTasks": 1,
+          "tasks": [
+            {
+              "taskNumber": 1,
+              "title": "string",
+              "description": "string",
+              "solution": "string",
+              "code": "string",
+              "hasCode": true,
+              "expectedOutput": "string",
+              "outputAnalysis": "string"
+            }
+          ],
+          "conclusion": "string"
+        }
+        
+        ${prompt}`
       },
       {
         role: "user",
