@@ -261,6 +261,10 @@ body {
   border-color: var(--accent-blue);
   box-shadow: 0 0 0 3px rgba(99,179,237,0.12);
 }
+.model-select option {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
 .model-hint {
   margin-top: 8px;
   font-size: 12px;
