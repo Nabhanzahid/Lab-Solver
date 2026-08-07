@@ -2,6 +2,12 @@
  * Shared utilities for Gemini and OpenAI services
  */
 
+import * as pdfjsLib from 'pdfjs-dist';
+import Tesseract from 'tesseract.js';
+
+// Setup pdfjs worker using CDN to avoid Vite worker issues
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.mjs`;
+
 /**
  * Convert a File object to base64 string
  */
@@ -169,3 +175,39 @@ export const RESPONSE_SCHEMA = {
   },
   required: ["reportTitle", "tasks", "conclusion"]
 };
+
+/**
+ * Universal local text extraction from PDF or Image (OCR)
+ */
+export async function extractTextFromFile(file, onProgress) {
+  const mimeType = getMimeType(file);
+  
+  if (mimeType === 'application/pdf') {
+    onProgress?.(10);
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    let fullText = '';
+    const numPages = pdf.numPages;
+    
+    for (let i = 1; i <= numPages; i++) {
+      onProgress?.(10 + (i / numPages) * 20);
+      const page = await pdf.getPage(i);
+      const textContent = await page.getTextContent();
+      const pageText = textContent.items.map(item => item.str).join(' ');
+      fullText += pageText + '\n\n';
+    }
+    return fullText;
+  } else if (mimeType.startsWith('image/')) {
+    onProgress?.(10);
+    const { data: { text } } = await Tesseract.recognize(file, 'eng', {
+      logger: m => {
+        if (m.status === 'recognizing text') {
+          onProgress?.(10 + m.progress * 20);
+        }
+      }
+    });
+    return text;
+  } else {
+    return await file.text();
+  }
+}

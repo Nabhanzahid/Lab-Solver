@@ -3,36 +3,53 @@ import {
   getMimeType, 
   robustJsonParse, 
   getLabSolverPrompt,
-  RESPONSE_SCHEMA
+  RESPONSE_SCHEMA,
+  extractTextFromFile
 } from './utils';
 
 /**
  * Main function: send lab report to Groq and return structured result
  */
 export async function solveLabReportGroq(file, apiKey, onProgress, model = 'llama-3.2-11b-vision-preview', extraContext = '') {
-  if (!model.includes('vision')) {
-    throw new Error(`The selected model '${model}' does not support Vision/File inputs. Please select a Vision model from the dropdown.`);
-  }
-
   onProgress?.(5);
 
-  const base64Data = await fileToBase64(file);
   const mimeType = getMimeType(file);
+  const isVisionModel = model.includes('vision');
+  
+  let messagesContent = [];
 
-  onProgress?.(35);
-
-  // Groq requires image content to be sent as base64 URL for vision models
-  const isPdf = mimeType === 'application/pdf';
-  // Note: if Groq doesn't natively support PDF in vision, we might just pass the base64 URL and let it attempt,
-  // or it will fail. Groq Vision works best with images.
-  const imageUrl = `data:${isPdf ? 'application/pdf' : mimeType};base64,${base64Data}`;
-
-  const filePart = {
-    type: "image_url",
-    image_url: {
-      url: imageUrl
+  if (isVisionModel) {
+    const base64Data = await fileToBase64(file);
+    const isPdf = mimeType === 'application/pdf';
+    const imageUrl = `data:${isPdf ? 'application/pdf' : mimeType};base64,${base64Data}`;
+    
+    messagesContent = [
+      {
+        type: "text",
+        text: `Analyze this lab report. ${extraContext || ''}`
+      },
+      {
+        type: "image_url",
+        image_url: { url: imageUrl }
+      }
+    ];
+    onProgress?.(35);
+  } else {
+    // Model is text-only. Extract text locally via PDF parser or OCR!
+    const extractedText = await extractTextFromFile(file, onProgress);
+    
+    if (!extractedText || extractedText.trim() === '') {
+      throw new Error(`Failed to extract text from the file locally. Please try a different file or switch to a Vision model.`);
     }
-  };
+
+    messagesContent = [
+      {
+        type: "text",
+        text: `Analyze the following extracted text from the lab report:\n\n${extractedText}\n\n${extraContext || ''}`
+      }
+    ];
+    onProgress?.(35);
+  }
 
   onProgress?.(50);
 
@@ -48,13 +65,7 @@ export async function solveLabReportGroq(file, apiKey, onProgress, model = 'llam
       },
       {
         role: "user",
-        content: [
-          {
-            type: "text",
-            text: `Analyze this lab report. ${extraContext || ''}`
-          },
-          filePart
-        ]
+        content: messagesContent
       }
     ],
     response_format: { type: "json_object" },
