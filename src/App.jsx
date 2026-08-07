@@ -621,7 +621,7 @@ export default function App() {
               <button
                 id="btn-solve"
                 className="solve-btn"
-                disabled={apiKey.trim().length < 10 || !file || phase !== PHASE.IDLE}
+                disabled={(provider === 'gemini' ? apiKey : provider === 'groq' ? groqKey : openaiKey).trim().length < 10 || !file || phase !== PHASE.IDLE}
                 onClick={() => handleSolve(false)}
               >
                 <span>🚀</span>

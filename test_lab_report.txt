@@ -1,0 +1,13 @@
+# Lab Report: Introduction to Python Programming
+
+## Task 1: Basic Arithmetic
+**Description:** Write a Python script to define two variables, `x = 42` and `y = 15`. Calculate their sum and print the result. 
+This will test the solver's basic code generation and execution capabilities.
+
+## Task 2: Data Generation
+**Description:** Import the `random` library. Generate a list of 5 random integers between 1 and 50. Print the list to the console.
+This tests importing standard libraries and verifying output.
+
+## Task 3: Theoretical Analysis
+**Description:** Briefly explain the conceptual difference between a Python `list` and a `tuple`.
+This tests the solver's ability to handle purely theoretical questions without generating code.
