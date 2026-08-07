@@ -9,7 +9,11 @@ import {
 /**
  * Main function: send lab report to Groq and return structured result
  */
-export async function solveLabReportGroq(file, apiKey, onProgress, model = 'llama-3.2-90b-vision-preview', extraContext = '') {
+export async function solveLabReportGroq(file, apiKey, onProgress, model = 'llama-3.2-11b-vision-preview', extraContext = '') {
+  if (!model.includes('vision')) {
+    throw new Error(`The selected model '${model}' does not support Vision/File inputs. Please select a Vision model from the dropdown.`);
+  }
+
   onProgress?.(5);
 
   const base64Data = await fileToBase64(file);

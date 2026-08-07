@@ -226,7 +226,7 @@ export default function App() {
   const [preferredModelOpenAI, setPreferredModelOpenAI] = useState(() => localStorage.getItem('ls_openai_model') || 'gpt-4o');
   
   const [groqKey, setGroqKey] = useState(() => localStorage.getItem('groq_api_key') || '');
-  const [preferredModelGroq, setPreferredModelGroq] = useState(() => localStorage.getItem('ls_groq_model') || 'llama-3.2-90b-vision-preview');
+  const [preferredModelGroq, setPreferredModelGroq] = useState(() => localStorage.getItem('ls_groq_model') || 'llama-3.2-11b-vision-preview');
   
   const [refiningTaskId, setRefiningTaskId] = useState(null);
 
@@ -593,8 +593,7 @@ export default function App() {
                     value={preferredModelGroq}
                     onChange={(e) => setPreferredModelGroq(e.target.value)}
                   >
-                    <option value="llama-3.2-90b-vision-preview">Llama 3.2 90B Vision (Standard)</option>
-                    <option value="llama-3.2-11b-vision-preview">Llama 3.2 11B Vision (Fast)</option>
+                    <option value="llama-3.2-11b-vision-preview">Llama 3.2 11B Vision (Fast/Standard)</option>
                     <option value="llama-3.3-70b-versatile">Llama 3.3 70B (Versatile/No-Vision)</option>
                   </select>
                 ) : (
