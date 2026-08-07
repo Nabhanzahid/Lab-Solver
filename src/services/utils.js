@@ -143,7 +143,9 @@ CRITICAL INSTRUCTIONS:
    - Use 'tensorflow', 'keras', 'scikit-learn', 'pandas', 'matplotlib' aggressively.
    - If no dataset is provided in the document, generate realistic structured mock data using numpy/pandas in Task 1, and use that mock data for all remaining tasks.
 
-7. Ensure 'outputAnalysis' contains a realistic prediction of what the terminal/console would output upon running the generated python code.`;
+7. Ensure 'outputAnalysis' contains a realistic prediction of what the terminal/console would output upon running the generated python code.
+   - CRITICAL: DO NOT use repetitive boilerplate phrases like "Upon running the provided code..." or "This demonstrates the solver's ability...". 
+   - Write naturally and directly. State EXACTLY what the expected terminal output looks like and briefly explain its analytical meaning in a creative, varied tone.`;
 }
 
 /**
