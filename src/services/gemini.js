@@ -1,85 +1,90 @@
-// ─────────────────────────────────────────────────────────────
-// gemini.js  –  Gemini API service
-// ─────────────────────────────────────────────────────────────
+import { 
+  fileToBase64, 
+  getMimeType, 
+  robustJsonParse, 
+  getLabSolverPrompt,
+  RESPONSE_SCHEMA 
+} from './utils';
 
-import { buildMasterPrompt, RESPONSE_SCHEMA } from './prompt.js';
-
-async function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload  = () => resolve(reader.result.split(',')[1]);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
-function getMimeType(file) {
-  if (file.type) return file.type;
-  const ext = file.name.split('.').pop().toLowerCase();
-  const map = { pdf: 'application/pdf', png: 'image/png', jpg: 'image/jpeg',
-                 jpeg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif' };
-  return map[ext] || 'application/octet-stream';
-}
-
-export async function solveLabReport(file, apiKey, onProgress, model = 'gemini-2.5-flash', extraContext = '') {
+/**
+ * Main function: send lab report to Gemini and return structured result
+ */
+export async function solveLabReport(file, apiKey, onProgress, model = 'gemini-2.0-flash', extraContext = '') {
+  console.log("ENTERING solveLabReport");
   onProgress?.(5);
-  const base64 = await fileToBase64(file);
-  const mime   = getMimeType(file);
 
-  onProgress?.(30);
-  const prompt = buildMasterPrompt(extraContext);
+  console.log("AWAITING fileToBase64...");
+  const base64Data = await fileToBase64(file);
+  console.log("FINISHED fileToBase64. AWAITING mimeType...");
+  const mimeType = getMimeType(file);
+
+  onProgress?.(35);
+  console.log("FINISHED mimeType. COMPILING prompt...");
+
+  const prompt = getLabSolverPrompt();
 
   onProgress?.(50);
+  console.log("PROMPT COMPILED. PREPARING FETCH...");
 
-  const isV1    = model.includes('1.5');
-  const version = isV1 ? 'v1' : 'v1beta';
-  const useStructured = version === 'v1beta';
+  const version = model.includes('1.5') ? 'v1' : 'v1beta';
+  const isV1Beta = version === 'v1beta';
 
-  const body = {
-    contents: [{ parts: [
-      { text: prompt },
-      { inline_data: { mime_type: mime, data: base64 } }
-    ]}],
+  const requestBody = {
+    contents: [
+      {
+        parts: [
+          {
+            text: `${prompt}\n\n${extraContext || ''}`,
+          },
+          {
+            inline_data: {
+              mime_type: mimeType,
+              data: base64Data,
+            },
+          },
+        ],
+      },
+    ],
     generationConfig: {
       temperature: 0.1,
-      max_output_tokens: 65536,
-      ...(useStructured ? {
-        response_mime_type: 'application/json',
-        response_schema: RESPONSE_SCHEMA,
-      } : {}),
+      max_output_tokens: 8192,
+      ...(isV1Beta ? {
+        response_mime_type: "application/json",
+        response_schema: RESPONSE_SCHEMA
+      } : {})
     },
   };
 
-  const url = `https://generativelanguage.googleapis.com/${version}/models/${model}:generateContent?key=${apiKey}`;
-  const res  = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const apiUrl = `https://generativelanguage.googleapis.com/${version}/models/${model}:generateContent`;
+  const response = await fetch(`${apiUrl}?key=${apiKey}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(requestBody),
+  });
 
   onProgress?.(70);
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    const e   = new Error(`Gemini API error: ${err?.error?.message || res.status}`);
-    e.status  = res.status;
-    throw e;
+
+  if (!response.ok) {
+    const errData = await response.json().catch(() => ({}));
+    const msg = errData?.error?.message || `HTTP ${response.status}`;
+    const error = new Error(`Gemini API error: ${msg}`);
+    error.status = response.status; // Attach status for fallback logic
+    throw error;
   }
 
-  const json = await res.json();
+  const data = await response.json();
   onProgress?.(85);
 
-  const text = json?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) throw new Error('Gemini returned an empty response.');
+  const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!rawText) {
+    throw new Error('Gemini returned an empty response.');
+  }
 
-  onProgress?.(95);
-  return parseLabResponse(text);
-}
-
-function parseLabResponse(text) {
-  // Strip markdown code fences if present
-  const clean = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
   try {
-    return JSON.parse(clean);
-  } catch {
-    // Try to extract JSON object from surrounding text
-    const match = clean.match(/\{[\s\S]*\}/);
-    if (match) return JSON.parse(match[0]);
-    throw new Error('Could not parse AI response as JSON. Please try again.');
+    onProgress?.(95);
+    return robustJsonParse(rawText);
+  } catch (err) {
+    console.error("Critical JSON Parse Failure.\nRaw:", rawText);
+    throw new Error(`The lab report solution was generated but contained structural errors. This often happens with very long tasks. Please try uploading again or using a shorter document.`);
   }
 }

@@ -7,9 +7,9 @@ import {
 } from './utils';
 
 /**
- * Main function: send lab report to OpenAI and return structured result
+ * Main function: send lab report to Groq and return structured result
  */
-export async function solveLabReportOpenAI(file, apiKey, onProgress, model = 'gpt-4o', extraContext = '') {
+export async function solveLabReportGroq(file, apiKey, onProgress, model = 'llama-3.2-90b-vision-preview', extraContext = '') {
   onProgress?.(5);
 
   const base64Data = await fileToBase64(file);
@@ -17,26 +17,22 @@ export async function solveLabReportOpenAI(file, apiKey, onProgress, model = 'gp
 
   onProgress?.(35);
 
-  // Determine content part based on MIME type
+  // Groq requires image content to be sent as base64 URL for vision models
   const isPdf = mimeType === 'application/pdf';
-  const filePart = isPdf 
-    ? {
-        type: "file",
-        file: {
-          file_data: `data:${mimeType};base64,${base64Data}`,
-          filename: file.name
-        }
-      }
-    : {
-        type: "image_url",
-        image_url: {
-          url: `data:${mimeType};base64,${base64Data}`
-        }
-      };
+  // Note: if Groq doesn't natively support PDF in vision, we might just pass the base64 URL and let it attempt,
+  // or it will fail. Groq Vision works best with images.
+  const imageUrl = `data:${isPdf ? 'application/pdf' : mimeType};base64,${base64Data}`;
+
+  const filePart = {
+    type: "image_url",
+    image_url: {
+      url: imageUrl
+    }
+  };
 
   onProgress?.(50);
 
-  // OpenAI request body using Structured Outputs (json_schema)
+  // Groq API uses an OpenAI-compatible endpoint
   const prompt = getLabSolverPrompt();
   const requestBody = {
     model: model,
@@ -57,18 +53,11 @@ export async function solveLabReportOpenAI(file, apiKey, onProgress, model = 'gp
         ]
       }
     ],
-    response_format: { 
-      type: "json_schema",
-      json_schema: {
-        name: "lab_report_solution",
-        strict: false, 
-        schema: RESPONSE_SCHEMA
-      }
-    },
+    response_format: { type: "json_object" },
     temperature: 0.1,
   };
 
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: { 
       'Content-Type': 'application/json',
@@ -82,7 +71,7 @@ export async function solveLabReportOpenAI(file, apiKey, onProgress, model = 'gp
   if (!response.ok) {
     const errData = await response.json().catch(() => ({}));
     const msg = errData?.error?.message || `HTTP ${response.status}`;
-    throw new Error(`OpenAI API error: ${msg}`);
+    throw new Error(`Groq API error: ${msg}`);
   }
 
   const data = await response.json();
@@ -90,7 +79,7 @@ export async function solveLabReportOpenAI(file, apiKey, onProgress, model = 'gp
 
   const rawText = data?.choices?.[0]?.message?.content;
   if (!rawText) {
-    throw new Error('OpenAI returned an empty response.');
+    throw new Error('Groq returned an empty response.');
   }
 
   try {
@@ -98,6 +87,6 @@ export async function solveLabReportOpenAI(file, apiKey, onProgress, model = 'gp
     return robustJsonParse(rawText);
   } catch (err) {
     console.error("Critical JSON Parse Failure.\nRaw:", rawText);
-    throw new Error(`The OpenAI solution was generated but contained structural errors. Please try again.`);
+    throw new Error(`The Groq solution was generated but contained structural errors. Please try again.`);
   }
 }

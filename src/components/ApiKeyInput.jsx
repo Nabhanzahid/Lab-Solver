@@ -4,10 +4,24 @@ export default function ApiKeyInput({ apiKey, setApiKey, provider = 'gemini' }) 
   const [show, setShow] = useState(false);
 
   const isGemini = provider === 'gemini';
-  const label = isGemini ? 'Gemini API Key' : 'OpenAI API Key';
-  const placeholder = isGemini ? 'AIza...' : 'sk-...';
-  const link = isGemini ? 'https://aistudio.google.com/apikey' : 'https://platform.openai.com/api-keys';
-  const host = isGemini ? 'aistudio.google.com' : 'platform.openai.com';
+  const isGroq = provider === 'groq';
+  
+  let label = 'OpenAI API Key';
+  let placeholder = 'sk-...';
+  let link = 'https://platform.openai.com/api-keys';
+  let host = 'platform.openai.com';
+  
+  if (isGemini) {
+    label = 'Gemini API Key';
+    placeholder = 'AIza...';
+    link = 'https://aistudio.google.com/apikey';
+    host = 'aistudio.google.com';
+  } else if (isGroq) {
+    label = 'Groq API Key';
+    placeholder = 'gsk_...';
+    link = 'https://console.groq.com/keys';
+    host = 'console.groq.com';
+  }
 
   return (
     <div className="api-key-section">
@@ -41,6 +55,7 @@ export default function ApiKeyInput({ apiKey, setApiKey, provider = 'gemini' }) 
           {host}
         </a>
         {isGemini && ' — no credit card needed'}
+        {isGroq && ' — lightning fast inferences'}
       </div>
     </div>
   );

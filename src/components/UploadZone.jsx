@@ -57,8 +57,8 @@ export default function UploadZone({ file, setFile, datasets = [], setDatasets =
           type="file"
           accept={ACCEPTED}
           onChange={handleChange}
-          style={{ display: 'none' }}
           id="file-input"
+          onClick={e => e.stopPropagation()}
         />
 
         {file ? (
