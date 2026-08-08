@@ -135,8 +135,8 @@ export function getLabSolverPrompt() {
 CRITICAL INSTRUCTIONS:
 1. You MUST return EXACTLY ONE valid JSON object matching the requested schema.
 2. The 'tasks' array MUST contain AT LEAST ONE task. If you cannot find any explicit tasks in the document, you MUST generate a default 'Data Exploration' task (Task 1).
-3. Escape newlines (\\\\n) and double quotes (\\\\") strictly inside all JSON string values. Use single quotes (') for internal Python strings to prevent JSON parsing errors.
-4. Keep 'description' and 'solution' under 300 characters each. Keep Python code concise and focused on the core logic to prevent output truncation.
+3. Write clean, MULTI-LINE Python code. DO NOT squash code into a single line with semicolons. To format multi-line code in JSON, use the literal characters \\n for newlines (e.g., "def foo():\\n    pass").
+4. Keep 'description' and 'solution' under 300 characters each. Focus Python code on core logic to prevent truncation.
 5. RUNTIME CONTEXT: This is a CONTINUOUS LINEAR EXECUTION. Tasks share variables (e.g., Task 1 defines 'df', Task 2 uses 'df' without importing it again).
 6. FULL POWER DATA SCIENCE:
    - Use 'tensorflow', 'keras', 'scikit-learn', 'pandas', 'matplotlib' aggressively.
