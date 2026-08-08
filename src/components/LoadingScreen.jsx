@@ -12,16 +12,12 @@ const MESSAGES = [
 ];
 
 export default function LoadingScreen({ progress, statusOverride, fallbackMsg }) {
-  const [currentStatus, setCurrentStatus] = useState('Starting...');
-
-  useEffect(() => {
-    console.log(`[LoadingScreen] Progress updated: ${progress}%`);
-    if (progress < 10) setCurrentStatus('Preparing lab report...');
-    else if (progress < 25) setCurrentStatus('Reading file contents...');
-    else if (progress < 40) setCurrentStatus('Connecting to AI Model API...');
-    else if (progress < 80) setCurrentStatus(`AI is thinking... (High compute node)`);
-    else if (progress < 100) setCurrentStatus('Finalizing results...');
-  }, [progress]);
+  let currentStatus = 'Starting...';
+  if (progress < 10) currentStatus = 'Preparing lab report...';
+  else if (progress < 25) currentStatus = 'Reading file contents...';
+  else if (progress < 40) currentStatus = 'Connecting to AI Model API...';
+  else if (progress < 80) currentStatus = 'AI is thinking... (High compute node)';
+  else if (progress < 100) currentStatus = 'Finalizing results...';
 
   return (
     <div className="loading-overlay">

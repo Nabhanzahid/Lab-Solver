@@ -1,3 +1,4 @@
+/* eslint-env node */
 import { createClerkClient } from '@clerk/backend';
 import crypto from 'crypto';
 
@@ -36,7 +37,7 @@ export default async function handler(req, res) {
     if (signature.length !== digest.length || !crypto.timingSafeEqual(digest, signature)) {
       return res.status(401).json({ error: 'Invalid signature' });
     }
-  } catch (error) {
+  } catch {
     return res.status(401).json({ error: 'Signature verification failed' });
   }
 

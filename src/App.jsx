@@ -465,7 +465,7 @@ export default function App() {
       setError(errorMessage);
       setPhase(PHASE.ERROR);
     }
-  }, [file, apiKey, openaiKey, datasets, retryCount, preferredModel, provider]); // Updated deps
+  }, [file, apiKey, openaiKey, groqKey, datasets, retryCount, preferredModel, preferredModelGroq, preferredModelOpenAI, provider]); // Updated deps
 
   // Countdown timer logic
   useEffect(() => {
