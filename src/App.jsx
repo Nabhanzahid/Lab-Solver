@@ -498,7 +498,6 @@ export default function App() {
             </div>
             </div>
           </div>
-          </div>
           <div className="header-badge" style={{ display: 'flex', gap: '16px', alignItems: 'center', background: 'transparent', boxShadow: 'none' }}>
             {isLoaded && !isSignedIn && (
               <SignInButton mode="modal">
