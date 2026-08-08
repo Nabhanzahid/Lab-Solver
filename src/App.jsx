@@ -687,7 +687,7 @@ export default function App() {
                     return;
                   }
                   if (!hasPaid) {
-                    window.location.href = `https://shortsclipforgeai.lemonsqueezy.com/checkout/buy/1995267?checkout[custom][user_id]=${user.id}`;
+                    window.location.href = `https://shortsclipforgeai.lemonsqueezy.com/checkout/buy/7d0976ce-aee9-4fa0-aab9-88ca52da2467?checkout[custom][user_id]=${user.id}`;
                     return;
                   }
                   handleSolve(false);
