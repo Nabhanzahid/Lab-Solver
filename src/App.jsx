@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { SignInButton, UserButton, useUser, useClerk } from '@clerk/clerk-react';
 import './index.css';
 import ApiKeyInput from './components/ApiKeyInput';
 import UploadZone from './components/UploadZone';
@@ -207,6 +208,10 @@ const PHASE = {
 };
 
 export default function App() {
+  const { isSignedIn, user, isLoaded } = useUser();
+  const clerk = useClerk();
+  const hasPaid = user?.publicMetadata?.hasPaid === true;
+
   const [apiKey, setApiKey] = useState(() => localStorage.getItem('gemini_api_key') || '');
   const [preferredModel, setPreferredModel] = useState('gemini-2.5-flash');
   const [file, setFile] = useState(null);
@@ -493,9 +498,18 @@ export default function App() {
             </div>
             </div>
           </div>
-          <div className="header-badge">
-            <div className="dot-pulse" />
-            AI Active
+          </div>
+          <div className="header-badge" style={{ display: 'flex', gap: '16px', alignItems: 'center', background: 'transparent', boxShadow: 'none' }}>
+            {isLoaded && !isSignedIn && (
+              <SignInButton mode="modal">
+                <button className="solve-btn" style={{ padding: '6px 14px', fontSize: '13px', height: 'auto', minWidth: 'auto' }}>Login / Sign Up</button>
+              </SignInButton>
+            )}
+            {isLoaded && isSignedIn && <UserButton afterSignOutUrl="/" />}
+            <div style={{ background: 'var(--surface-sunken)', padding: '6px 12px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: '600' }}>
+              <div className="dot-pulse" />
+              AI Active
+            </div>
           </div>
         </div>
       </header>
@@ -667,11 +681,21 @@ export default function App() {
               <button
                 id="btn-solve"
                 className="solve-btn"
-                disabled={(provider === 'gemini' ? apiKey : provider === 'groq' ? groqKey : openaiKey).trim().length < 10 || !file || phase !== PHASE.IDLE}
-                onClick={() => handleSolve(false)}
+                disabled={(!isSignedIn && phase !== PHASE.IDLE) || (isSignedIn && hasPaid && ((provider === 'gemini' ? apiKey : provider === 'groq' ? groqKey : openaiKey).trim().length < 10 || !file || phase !== PHASE.IDLE))}
+                onClick={() => {
+                  if (!isSignedIn) {
+                    clerk.openSignIn();
+                    return;
+                  }
+                  if (!hasPaid) {
+                    window.location.href = `https://your-store.lemonsqueezy.com/checkout/buy/YOUR_VARIANT_ID?checkout[custom][user_id]=${user.id}`;
+                    return;
+                  }
+                  handleSolve(false);
+                }}
               >
-                <span>🚀</span>
-                Solve Lab Report
+                <span>{(!isSignedIn || !hasPaid) ? '🔒' : '🚀'}</span>
+                {!isSignedIn ? 'Login to Solve' : !hasPaid ? 'Pay $5 to Unlock' : 'Solve Lab Report'}
               </button>
             </div>
 
