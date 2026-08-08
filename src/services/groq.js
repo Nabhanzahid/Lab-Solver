@@ -90,7 +90,7 @@ export async function solveLabReportGroq(file, apiKey, onProgress, model = 'llam
     ],
     response_format: { type: "json_object" },
     temperature: 0.1,
-    max_tokens: 8000,
+    max_tokens: 4096,
   };
 
   const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
