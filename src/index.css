@@ -1194,8 +1194,8 @@ pre {
 
 .tab-item.active {
   background: var(--gradient-hero);
-  color: var(--text-primary);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 /* Fallback Status (Loading Screen) */
