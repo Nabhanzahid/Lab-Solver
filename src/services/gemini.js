@@ -83,7 +83,7 @@ export async function solveLabReport(file, apiKey, onProgress, model = 'gemini-2
   try {
     onProgress?.(95);
     return robustJsonParse(rawText);
-  } catch (err) {
+  } catch {
     console.error("Critical JSON Parse Failure.\nRaw:", rawText);
     throw new Error(`The lab report solution was generated but contained structural errors. This often happens with very long tasks. Please try uploading again or using a shorter document.`);
   }

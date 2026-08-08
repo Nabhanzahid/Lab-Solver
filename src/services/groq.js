@@ -120,7 +120,7 @@ export async function solveLabReportGroq(file, apiKey, onProgress, model = 'llam
   try {
     onProgress?.(95);
     return robustJsonParse(rawText);
-  } catch (err) {
+  } catch {
     console.error("Critical JSON Parse Failure.\nRaw:", rawText);
     throw new Error(`The Groq solution was generated but contained structural errors. Please try again.`);
   }

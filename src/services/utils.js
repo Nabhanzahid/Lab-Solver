@@ -33,7 +33,7 @@ export function fileToBase64(file) {
       resolve(base64);
     };
 
-    reader.onerror = (err) => {
+    reader.onerror = () => {
       clearTimeout(timeout);
       reject(new Error("File reading failed natively."));
     };
@@ -96,33 +96,29 @@ export function robustJsonParse(str) {
   // 4. Cleanup trailing commas before closer (common in truncated arrays)
   cleaned = cleaned.replace(/,\s*([}\]])/g, '$1');
 
+  const deepClean = (obj) => {
+    for (let key in obj) {
+      if (typeof obj[key] === 'string') {
+        obj[key] = obj[key].replace(/\\n/g, '\n').replace(/\\"/g, '"');
+      } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+        deepClean(obj[key]);
+      }
+    }
+    return obj;
+  };
+
   try {
     const parsed = JSON.parse(cleaned);
-    // Recursively clean strings for escaped newlines (AI quirks)
-    const deepClean = (obj) => {
-      for (let key in obj) {
-        if (typeof obj[key] === 'string') {
-          obj[key] = obj[key].replace(/\\n/g, '\n').replace(/\\"/g, '"');
-        } else if (typeof obj[key] === 'object' && obj[key] !== null) {
-          deepClean(obj[key]);
-        }
-      }
-      return obj;
-    };
     return deepClean(parsed);
-  } catch (e) {
+  } catch {
     // 5. Aggressive repair for unescaped newlines/quotes
     let repaired = cleaned
       .replace(/\n/g, '\\n')
       .replace(/\\n\s*"/g, '"')
       .replace(/"\s*\\n/g, '"');
     
-    try {
-      const parsed2 = JSON.parse(repaired);
-      return deepClean(parsed2);
-    } catch (e2) {
-      throw e2; 
-    }
+    const parsed2 = JSON.parse(repaired);
+    return deepClean(parsed2);
   }
 }
 

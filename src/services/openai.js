@@ -96,7 +96,7 @@ export async function solveLabReportOpenAI(file, apiKey, onProgress, model = 'gp
   try {
     onProgress?.(95);
     return robustJsonParse(rawText);
-  } catch (err) {
+  } catch {
     console.error("Critical JSON Parse Failure.\nRaw:", rawText);
     throw new Error(`The OpenAI solution was generated but contained structural errors. Please try again.`);
   }
