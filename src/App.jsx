@@ -10,6 +10,7 @@ import { solveLabReportGroq } from './services/groq';
 import { downloadNotebook } from './services/notebook';
 import { loadPyodideRuntime, runPythonCode } from './services/pyodide';
 import { refineLabTask } from './services/refiner';
+import { analyzeLabRequirements, generateMockDataFile } from './services/analyzer';
 
 /* ── small inline components ── */
 
@@ -201,6 +202,8 @@ function ResultsView({ labData, onReset, onDownload, onRefine, refiningTaskId })
 
 const PHASE = {
   IDLE: 'idle',
+  ANALYZING: 'analyzing',
+  REVIEWING: 'reviewing',
   SOLVING: 'solving',
   EXECUTING: 'executing',
   DONE: 'done',
@@ -236,6 +239,9 @@ export default function App() {
   const [isFetchingGroqModels, setIsFetchingGroqModels] = useState(false);
   
   const [refiningTaskId, setRefiningTaskId] = useState(null);
+  
+  const [requiredFiles, setRequiredFiles] = useState([]);
+  const [mockGenerating, setMockGenerating] = useState(null);
 
   // Persist API keys and settings
   function handleSetApiKey(key) {
@@ -292,6 +298,44 @@ export default function App() {
       return () => { isSubscribed = false; };
     }
   }, [provider, groqKey]);
+
+  const handleAnalyze = async () => {
+    const currentKey = provider === 'gemini' ? apiKey.trim() : provider === 'groq' ? groqKey.trim() : openaiKey.trim();
+    if (currentKey.length < 10 || !file) return;
+
+    setPhase(PHASE.ANALYZING);
+    setProgress(0);
+    setError('');
+    
+    try {
+      const requirements = await analyzeLabRequirements(file, currentKey, provider, p => setProgress(p));
+      const missingFiles = requirements.requiredFiles.filter(rf => !datasets.some(d => d.name === rf.filename));
+      
+      if (requirements.requiresExternalFiles && missingFiles.length > 0) {
+        setRequiredFiles(requirements.requiredFiles);
+        setPhase(PHASE.REVIEWING);
+      } else {
+        handleSolve(false);
+      }
+    } catch (err) {
+      setError("Analysis failed: " + err.message);
+      setPhase(PHASE.ERROR);
+    }
+  };
+
+  const handleGenerateMock = async (reqFile, index) => {
+    const currentKey = provider === 'gemini' ? apiKey.trim() : provider === 'groq' ? groqKey.trim() : openaiKey.trim();
+    setMockGenerating(index);
+    try {
+      const mockContent = await generateMockDataFile(reqFile.filename, reqFile.description, currentKey);
+      const newFile = new File([mockContent], reqFile.filename, { type: 'text/plain' });
+      setDatasets(prev => [...prev, newFile]);
+    } catch (err) {
+      alert("Failed to generate mock data: " + err.message);
+    } finally {
+      setMockGenerating(null);
+    }
+  };
 
   const handleSolve = useCallback(async (isAuto = false) => {
     // Fresh check of basic readiness
@@ -474,11 +518,13 @@ export default function App() {
     if (labData) downloadNotebook(labData);
   }
 
-  const isLoading = phase === PHASE.SOLVING || phase === PHASE.EXECUTING;
+  const isLoading = phase === PHASE.SOLVING || phase === PHASE.EXECUTING || phase === PHASE.ANALYZING;
 
   const loadingTitle =
     phase === PHASE.EXECUTING
       ? `Executing Python...`
+      : phase === PHASE.ANALYZING
+      ? `Analyzing Required Files...`
       : undefined;
 
   return (
@@ -677,25 +723,67 @@ export default function App() {
                 datasets={datasets}
                 setDatasets={setDatasets}
               />
-              <button
-                id="btn-solve"
-                className="solve-btn"
-                disabled={(!isSignedIn && phase !== PHASE.IDLE) || (isSignedIn && hasPaid && ((provider === 'gemini' ? apiKey : provider === 'groq' ? groqKey : openaiKey).trim().length < 10 || !file || phase !== PHASE.IDLE))}
-                onClick={() => {
-                  if (!isSignedIn) {
-                    clerk.openSignIn();
-                    return;
-                  }
-                  if (!hasPaid) {
-                    window.location.href = `https://shortsclipforgeai.lemonsqueezy.com/checkout/buy/7d0976ce-aee9-4fa0-aab9-88ca52da2467?checkout[custom][user_id]=${user.id}`;
-                    return;
-                  }
-                  handleSolve(false);
-                }}
-              >
-                <span>{(!isSignedIn || !hasPaid) ? '🔒' : '🚀'}</span>
-                {!isSignedIn ? 'Login to Solve' : !hasPaid ? 'Pay $5 to Unlock' : 'Solve Lab Report'}
-              </button>
+              
+              {phase === PHASE.REVIEWING && (
+                <div className="error-card" style={{ background: '#f8f9fa', border: '1px solid #dee2e6', color: '#333', margin: '20px 0' }}>
+                  <div className="error-title">📁 Missing Files Detected</div>
+                  <div className="error-msg" style={{ marginBottom: 16 }}>
+                    This lab report requires external files to execute properly. Please upload them or generate mock data.
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {requiredFiles.map((rf, idx) => {
+                      const isProvided = datasets.some(d => d.name === rf.filename);
+                      return (
+                        <div key={idx} style={{ padding: 12, background: '#fff', borderRadius: 6, border: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div>
+                            <div style={{ fontWeight: 600 }}>{rf.filename} {isProvided && '✅'}</div>
+                            <div style={{ fontSize: '12px', color: '#666' }}>{rf.description} (Task: {rf.mentionedInTask})</div>
+                          </div>
+                          {!isProvided && (
+                            <button 
+                              className="btn-outline" 
+                              style={{ fontSize: '12px', padding: '6px 12px', height: 'auto' }}
+                              onClick={() => handleGenerateMock(rf, idx)}
+                              disabled={mockGenerating === idx}
+                            >
+                              {mockGenerating === idx ? 'Generating...' : '✨ Generate Mock'}
+                            </button>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                  <button 
+                    className="solve-btn" 
+                    style={{ marginTop: 20, width: '100%', padding: '12px' }}
+                    onClick={() => handleSolve(false)}
+                  >
+                    Continue to Solve 🚀
+                  </button>
+                </div>
+              )}
+
+              {phase !== PHASE.REVIEWING && (
+                <button
+                  id="btn-solve"
+                  className="solve-btn"
+                  disabled={(!isSignedIn && phase !== PHASE.IDLE) || (isSignedIn && hasPaid && ((provider === 'gemini' ? apiKey : provider === 'groq' ? groqKey : openaiKey).trim().length < 10 || !file || phase !== PHASE.IDLE))}
+                  onClick={() => {
+                    if (!isSignedIn) {
+                      clerk.openSignIn();
+                      return;
+                    }
+                    if (!hasPaid) {
+                      window.location.href = `https://shortsclipforgeai.lemonsqueezy.com/checkout/buy/7d0976ce-aee9-4fa0-aab9-88ca52da2467?checkout[custom][user_id]=${user.id}`;
+                      return;
+                    }
+                    handleAnalyze();
+                  }}
+                >
+                  <span>{(!isSignedIn || !hasPaid) ? '🔒' : '🚀'}</span>
+                  {!isSignedIn ? 'Login to Solve' : !hasPaid ? 'Pay $5 to Unlock' : 'Solve Lab Report'}
+                </button>
+              )}
             </div>
 
             {/* Feature pills */}

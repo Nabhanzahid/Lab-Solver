@@ -140,7 +140,7 @@ CRITICAL INSTRUCTIONS:
 5. RUNTIME CONTEXT: This is a CONTINUOUS LINEAR EXECUTION. Tasks share variables (e.g., Task 1 defines 'df', Task 2 uses 'df' without importing it again).
 6. FULL POWER DATA SCIENCE:
    - Use 'tensorflow', 'keras', 'scikit-learn', 'pandas', 'matplotlib' aggressively.
-   - If no dataset is provided in the document, generate realistic structured mock data using numpy/pandas in Task 1, and use that mock data for all remaining tasks.
+   - Use any files provided in the prompt context.
 7. Ensure 'outputAnalysis' contains a realistic prediction of what the terminal/console would output upon running the generated python code.
    - CRITICAL: DO NOT use repetitive boilerplate phrases like "Upon running the provided code...". 
    - Write naturally and directly. State EXACTLY what the expected terminal output looks like and briefly explain its analytical meaning in a creative, varied tone.`;
