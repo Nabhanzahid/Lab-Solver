@@ -46,7 +46,7 @@ export default async function handler(req, res) {
   
   if (eventName === 'order_created') {
     // 3. Extract the user_id that we passed in the custom checkout data
-    const userId = body.data.attributes.custom_data?.user_id;
+    const userId = body.meta.custom_data?.user_id;
 
     if (userId) {
       try {
